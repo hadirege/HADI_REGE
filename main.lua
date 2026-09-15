@@ -48,7 +48,7 @@ local OriginalLighting = {
 -- Logika 1: Loop Full Speed
 RunService.Stepped:Connect(function()
     if fitureEkstra.LoopFullSpeed and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = 50
+        player.Character.Humanoid.WalkSpeed = 32
     end
 end)
 
@@ -390,7 +390,7 @@ task.spawn(function()
                 local jarak = (hrp.Position - posisiMelayang).Magnitude
 
                 if jarak > 5 then
-                    local durasi = jarak / 100
+                    local durasi = jarak / 200
                     local tweenInfo = TweenInfo.new(durasi, Enum.EasingStyle.Linear)
                     local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(posisiMelayang)})
                     
