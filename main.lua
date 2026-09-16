@@ -390,7 +390,7 @@ task.spawn(function()
                 local jarak = (hrp.Position - posisiMelayang).Magnitude
 
                 if jarak > 5 then
-                    local durasi = jarak / 200
+                    local durasi = jarak / math.huge
                     local tweenInfo = TweenInfo.new(durasi, Enum.EasingStyle.Linear)
                     local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(posisiMelayang)})
                     
