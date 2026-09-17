@@ -83,7 +83,7 @@ local function aktifkanAntiLag()
 end
 
 -- ====================================================================
--- GUI PANEL (Minimalis, Tombol - dan X, Judul HADI_REGE)
+-- GUI PANEL
 -- ====================================================================
 local guiExist = CoreGui:FindFirstChild("AutoFarmGuiOriginal") or player:WaitForChild("PlayerGui"):FindFirstChild("AutoFarmGuiOriginal")
 if guiExist then guiExist:Destroy() end
@@ -123,7 +123,6 @@ titleLabel.Font = Enum.Font.SourceSansBold
 titleLabel.TextSize = 14
 titleLabel.Parent = topBar
 
--- Tombol X (Menghilangkan GUI & Mematikan Auto Farm)
 local btnClose = Instance.new("TextButton")
 btnClose.Size = UDim2.new(0, 25, 0, 25)
 btnClose.Position = UDim2.new(1, -28, 0, 2)
@@ -134,7 +133,6 @@ btnClose.Font = Enum.Font.SourceSansBold
 btnClose.TextSize = 14
 btnClose.Parent = topBar
 
--- Tombol - (Sembunyikan / Munculkan Panel)
 local btnMinimize = Instance.new("TextButton")
 btnMinimize.Size = UDim2.new(0, 25, 0, 25)
 btnMinimize.Position = UDim2.new(1, -56, 0, 2)
@@ -152,7 +150,6 @@ contentFrame.Position = UDim2.new(0, 0, 0, 30)
 contentFrame.BackgroundTransparency = 1
 contentFrame.Parent = mainFrame
 
--- Tombol Toggle Utama (ON / OFF)
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(1, -16, 0, 32)
 toggleBtn.Position = UDim2.new(0, 8, 0, 6)
@@ -174,7 +171,6 @@ toggleBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Container Scroll List Item & Fitur
 local scrollList = Instance.new("ScrollingFrame")
 scrollList.Size = UDim2.new(1, -16, 1, -48)
 scrollList.Position = UDim2.new(0, 8, 0, 44)
@@ -191,7 +187,6 @@ uiListLayout.Padding = UDim.new(0, 3)
 
 local totalHeight = 0
 
--- 1. MEMBUAT TOGGLE UNTUK WHITELIST ITEM DI BAGIAN ATAS
 for namaItem, status in pairs(itemPilihan) do
     local itemBtn = Instance.new("TextButton")
     itemBtn.Size = UDim2.new(1, -6, 0, 26)
@@ -221,7 +216,6 @@ for namaItem, status in pairs(itemPilihan) do
     totalHeight = totalHeight + 29
 end
 
--- PEMBATAS VISUAL ANTARA WHITELIST ITEM & FITUR TAMBAHAN
 local divider = Instance.new("Frame")
 divider.Size = UDim2.new(1, -6, 0, 2)
 divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -229,7 +223,6 @@ divider.BorderSizePixel = 0
 divider.Parent = scrollList
 totalHeight = totalHeight + 5
 
--- 2. MEMBUAT TOGGLE KHUSUS FITUR EKSTRA DI BAGIAN BAWAH
 local function buatToggleFitur(namaTampil, keyFitur, callbackCustom)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, -6, 0, 26)
@@ -284,7 +277,6 @@ end)
 
 scrollList.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
 
--- Event Tombol - (Minimize/Maximize)
 local isMinimized = false
 btnMinimize.MouseButton1Click:Connect(function()
     isMinimized = not isMinimized
@@ -299,23 +291,20 @@ btnMinimize.MouseButton1Click:Connect(function()
     end
 end)
 
--- Event Tombol X (Tutup GUI)
 btnClose.MouseButton1Click:Connect(function()
     _G.AutoFarmAktif = false
     screenGui:Destroy()
 end)
 
 -- ====================================================================
--- FUNGSI MENCARI ITEM (DENGAN FILTER RAK / TOKO)
+-- FUNGSI MENCARI ITEM
 -- ====================================================================
 local function isItemDiToko(prompt)
     local obj = prompt
-    -- Cek sampai 6 tingkat ke atas apakah objek ini ada di dalam toko/rak/lapak
     for i = 1, 6 do
         if not obj or obj == Workspace then break end
         local namaObj = string.lower(obj.Name)
         
-        -- Kata kunci struktur rak/toko yang akan DIABAIKAN:
         if string.find(namaObj, "rak") or 
            string.find(namaObj, "toko") or 
            string.find(namaObj, "lapak") or 
@@ -341,8 +330,6 @@ local function dapatkanObjekTerdekat()
     
     for _, v in pairs(Workspace:GetDescendants()) do
         if v:IsA("ProximityPrompt") and v.Enabled then
-            
-            -- PASTIKAN BUKAN ITEM DI DALAM RAK TOKO
             if not isItemDiToko(v) then
                 local parentPart = v.Parent
                 if parentPart and parentPart:IsA("BasePart") then
@@ -361,14 +348,13 @@ local function dapatkanObjekTerdekat()
                     
                 end
             end
-            
         end
     end
     return targetTerpilih
 end
 
 -- ====================================================================
--- LOOP UTAMA ASLI MILIK ANDA
+-- LOOP UTAMA (DENGAN ROTASI KAMERA KE ITEM)
 -- ====================================================================
 task.spawn(function()
     while true do
@@ -379,48 +365,66 @@ task.spawn(function()
             if promptTarget and karakter and karakter:FindFirstChild("HumanoidRootPart") then
                 local partUtama = promptTarget.Parent
                 local hrp = karakter.HumanoidRootPart
+                local camera = Workspace.CurrentCamera
                 
-                -- Memeriksa apakah ini kepiting sungai (dalam air)
-                local isKepiting = string.find(string.lower(partUtama.Name), "kepiting") 
-                    or string.find(string.lower(promptTarget.ObjectText), "kepiting")
+                if partUtama and partUtama:IsA("BasePart") then
+                    local isKepiting = string.find(string.lower(partUtama.Name), "kepiting") 
+                        or string.find(string.lower(promptTarget.ObjectText), "kepiting")
 
-                local tinggiOffset = isKepiting and Vector3.new(0, 1, 0) or Vector3.new(0, 2.5, 0)
-                local posisiMelayang = partUtama.Position + tinggiOffset
-                
-                local jarak = (hrp.Position - posisiMelayang).Magnitude
-
-                if jarak > 5 then
-                    local durasi = jarak / math.huge
-                    local tweenInfo = TweenInfo.new(durasi, Enum.EasingStyle.Linear)
-                    local tween = TweenService:Create(hrp, tweenInfo, {CFrame = CFrame.new(posisiMelayang)})
+                    -- Posisi berdiri langsung di titik item (tetap pertahankan rotasi bawaan karakter)
+                    local tinggiOffset = isKepiting and Vector3.new(0, 0.5, 0) or Vector3.new(0, 1.5, 0)
+                    local posisiLamaRotation = hrp.CFrame.Rotation
                     
-                    tween:Play()
-                    tween.Completed:Wait()
+                    -- Pindahkan posisi TANPA mengubah arah hadap karakter
+                    hrp.CFrame = CFrame.new(partUtama.Position + tinggiOffset) * posisiLamaRotation
+                    
+                    -- ROTASI KAMERA: Hanya memutar pandangan kamera ke arah item
+                    if camera then
+                        local posisiKamera = camera.CFrame.Position
+                        camera.CFrame = CFrame.lookAt(posisiKamera, partUtama.Position)
+                    end
+                    
+                    hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                    hrp.Anchored = true
+                    
+                    -- Modifikasi sementara batas jarak ProximityPrompt agar 100% tervalidasi oleh server
+                    local reqLOS = promptTarget.RequiresLineOfSight
+                    local maxDist = promptTarget.MaxActivationDistance
+                    
+                    promptTarget.RequiresLineOfSight = false
+                    promptTarget.MaxActivationDistance = 30
+                    
+                    -- Jeda kecil agar server mencatat lokasi baru pemain
+                    task.wait(0.08)
+                    
+                    pcall(function()
+                        promptTarget:InputHoldBegin()
+                        
+                        local durasiHold = promptTarget.HoldDuration
+                        if durasiHold <= 0 then durasiHold = 0.1 end
+                        
+                        -- Tahan presisi dengan tambahan buffer kecil
+                        task.wait(durasiHold + 0.15)
+                        
+                        promptTarget:InputHoldEnd()
+                    end)
+                    
+                    -- Kembalikan properti asli item
+                    pcall(function()
+                        promptTarget.RequiresLineOfSight = reqLOS
+                        promptTarget.MaxActivationDistance = maxDist
+                    end)
+                    
+                    -- Lepas kuncian dan beri waktu server memasukkan item ke tas sebelum mencari item berikutnya
+                    task.wait(0.1)
+                    hrp.Anchored = false
+                    task.wait(0.1)
                 end
-                
-                -- AMBIL DENGAN SISTEM HOLD
-                task.wait(0.1)
-                
-                hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
-                hrp.Anchored = true
-                
-                promptTarget:InputHoldBegin()
-                
-                local durasiHold = promptTarget.HoldDuration
-                if durasiHold <= 0 then durasiHold = 0.1 end
-                
-                task.wait(durasiHold + 0.25)
-                
-                promptTarget:InputHoldEnd()
-                
-                hrp.Anchored = false
-                
-                task.wait(0.15)
             else
-                task.wait(0.5)
+                task.wait(0.1)
             end
         else
-            task.wait(1)
+            task.wait(0.1)
         end
     end
 end)
