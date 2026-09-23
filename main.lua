@@ -1,4 +1,4 @@
-local TweenService = game:GetService("TweenService")
+Local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
@@ -354,7 +354,7 @@ local function dapatkanObjekTerdekat()
 end
 
 -- ====================================================================
--- LOOP UTAMA (DENGAN ROTASI BADAN & PANDANGAN KAMERA SCRIPT)
+-- LOOP UTAMA (DENGAN ROTASI KAMERA KE ITEM)
 -- ====================================================================
 task.spawn(function()
     while true do
@@ -371,67 +371,60 @@ task.spawn(function()
                     local isKepiting = string.find(string.lower(partUtama.Name), "kepiting") 
                         or string.find(string.lower(promptTarget.ObjectText), "kepiting")
 
-                    local tinggiOffset = isKepiting and Vector3.new(0, 0.5, 0) or Vector3.new(0, 1.2, 0)
-                    local targetPos = partUtama.Position + tinggiOffset
+                    -- Posisi berdiri langsung di titik item (tetap pertahankan rotasi bawaan karakter)
+                    local tinggiOffset = isKepiting and Vector3.new(0, 0.5, 0) or Vector3.new(0, 1.5, 0)
+                    local posisiLamaRotation = hrp.CFrame.Rotation
                     
-                    -- 1. PUTAR KEDUA BADAN & PANDANGAN MENGHADAP KE ITEM
-                    local lookAtCFrame = CFrame.lookAt(targetPos, partUtama.Position)
-                    hrp.CFrame = lookAtCFrame
+                    -- Pindahkan posisi TANPA mengubah arah hadap karakter
+                    hrp.CFrame = CFrame.new(partUtama.Position + tinggiOffset) * posisiLamaRotation
                     
-                    -- 2. SESUAIKAN PANDANGAN KAMERA SECARA PRESISI (Scriptable Camera sementara)
+                    -- ROTASI KAMERA: Hanya memutar pandangan kamera ke arah item
                     if camera then
-                        camera.CameraType = Enum.CameraType.Scriptable
-                        -- Posisikan kamera di belakang atas karakter, menghadap lurus ke item
-                        local cameraPos = hrp.Position - (hrp.CFrame.LookVector * 6) + Vector3.new(0, 3, 0)
-                        camera.CFrame = CFrame.lookAt(cameraPos, partUtama.Position)
+                        local posisiKamera = camera.CFrame.Position
+                        camera.CFrame = CFrame.lookAt(posisiKamera, partUtama.Position)
                     end
                     
                     hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
                     hrp.Anchored = true
                     
-                    -- Buka pembatas Line of Sight & Jarak pada ProximityPrompt
+                    -- Modifikasi sementara batas jarak ProximityPrompt agar 100% tervalidasi oleh server
                     local reqLOS = promptTarget.RequiresLineOfSight
                     local maxDist = promptTarget.MaxActivationDistance
                     
                     promptTarget.RequiresLineOfSight = false
-                    promptTarget.MaxActivationDistance = 50
+                    promptTarget.MaxActivationDistance = 30
                     
-                    -- JEDA LAMA (0.5 Detik): Memberi waktu server memvalidasi posisi baru & arah pandangan
-                    task.wait(0.5)
+                    -- Jeda kecil agar server mencatat lokasi baru pemain
+                    task.wait(0.08)
                     
                     pcall(function()
                         promptTarget:InputHoldBegin()
                         
                         local durasiHold = promptTarget.HoldDuration
-                        if durasiHold <= 0 then durasiHold = 0.2 end
+                        if durasiHold <= 0 then durasiHold = 1 end
                         
-                        -- Jeda ekstra saat menahan tombol agar aksi diisi penuh (durasi + 0.5 detik)
-                        task.wait(durasiHold + 0.5)
+                        -- Tahan presisi dengan tambahan buffer kecil
+                        task.wait(durasiHold + 1)
                         
                         promptTarget:InputHoldEnd()
                     end)
                     
-                    -- Kembalikan properti ProximityPrompt
+                    -- Kembalikan properti asli item
                     pcall(function()
                         promptTarget.RequiresLineOfSight = reqLOS
                         promptTarget.MaxActivationDistance = maxDist
                     end)
                     
-                    -- Kembalikan kamera ke tipe normal agar kontrol game normal kembali
-                    if camera then
-                        camera.CameraType = Enum.CameraType.Custom
-                    end
-                    
-                    -- JEDA LAMA SETELAH AMBIL (0.6 Detik): Menjamin item tersimpan ke inventaris sebelum teleport lagi
-                    task.wait(0.3)
+                    -- Lepas kuncian dan beri waktu server memasukkan item ke tas sebelum mencari item berikutnya
+                    task.wait(0.1)
                     hrp.Anchored = false
-                    task.wait(0.6)
+                    task.wait(0.1)
                 end
             else
-                task.wait(0.5)
+                task.wait(0.1)
             end
         else
-            task.wait(0.5)
+            task.wait(0.1)
         end
     end
 end)
