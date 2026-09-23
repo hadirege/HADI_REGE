@@ -1,4 +1,4 @@
-Local TweenService = game:GetService("TweenService")
+local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
 local CoreGui = game:GetService("CoreGui")
@@ -12,9 +12,9 @@ local player = Players.LocalPlayer
 -- ANTI-AFK (Mencegah Kick 20 Menit)
 -- ====================================================================
 player.Idled:Connect(function()
-    VirtualUser:Button2Down(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+    VirtualUser:Button2Down(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
     task.wait(1)
-    VirtualUser:Button2Up(Vector2.new(0,0), Workspace.CurrentCamera.CFrame)
+    VirtualUser:Button2Up(Vector2.new(0, 0), Workspace.CurrentCamera.CFrame)
 end)
 
 -- ====================================================================
@@ -354,7 +354,7 @@ local function dapatkanObjekTerdekat()
 end
 
 -- ====================================================================
--- LOOP UTAMA (DENGAN ROTASI KAMERA KE ITEM)
+-- LOOP UTAMA (SINKRONISASI KAMERA & AKSI TAKING ITEM)
 -- ====================================================================
 task.spawn(function()
     while true do
@@ -371,51 +371,30 @@ task.spawn(function()
                     local isKepiting = string.find(string.lower(partUtama.Name), "kepiting") 
                         or string.find(string.lower(promptTarget.ObjectText), "kepiting")
 
-                    -- Posisi berdiri langsung di titik item (tetap pertahankan rotasi bawaan karakter)
                     local tinggiOffset = isKepiting and Vector3.new(0, 0.5, 0) or Vector3.new(0, 1.5, 0)
                     local posisiLamaRotation = hrp.CFrame.Rotation
                     
-                    -- Pindahkan posisi TANPA mengubah arah hadap karakter
+                    -- Pindahkan posisi ke item
                     hrp.CFrame = CFrame.new(partUtama.Position + tinggiOffset) * posisiLamaRotation
                     
-                    -- ROTASI KAMERA: Hanya memutar pandangan kamera ke arah item
+                    -- Arahkan kamera langsung ke objek
                     if camera then
-                        local posisiKamera = camera.CFrame.Position
-                        camera.CFrame = CFrame.lookAt(posisiKamera, partUtama.Position)
+                        camera.CFrame = CFrame.lookAt(camera.CFrame.Position, partUtama.Position)
                     end
                     
-                    hrp.AssemblyLinearVelocity = Vector3.new(0,0,0)
+                    hrp.AssemblyLinearVelocity = Vector3.zero
                     hrp.Anchored = true
                     
-                    -- Modifikasi sementara batas jarak ProximityPrompt agar 100% tervalidasi oleh server
-                    local reqLOS = promptTarget.RequiresLineOfSight
-                    local maxDist = promptTarget.MaxActivationDistance
-                    
-                    promptTarget.RequiresLineOfSight = false
-                    promptTarget.MaxActivationDistance = 30
-                    
-                    -- Jeda kecil agar server mencatat lokasi baru pemain
                     task.wait(0.08)
                     
                     pcall(function()
                         promptTarget:InputHoldBegin()
-                        
                         local durasiHold = promptTarget.HoldDuration
-                        if durasiHold <= 0 then durasiHold = 1 end
-                        
-                        -- Tahan presisi dengan tambahan buffer kecil
-                        task.wait(durasiHold + 1)
-                        
+                        if durasiHold <= 0 then durasiHold = 0.1 end
+                        task.wait(durasiHold + 0.15)
                         promptTarget:InputHoldEnd()
                     end)
                     
-                    -- Kembalikan properti asli item
-                    pcall(function()
-                        promptTarget.RequiresLineOfSight = reqLOS
-                        promptTarget.MaxActivationDistance = maxDist
-                    end)
-                    
-                    -- Lepas kuncian dan beri waktu server memasukkan item ke tas sebelum mencari item berikutnya
                     task.wait(0.1)
                     hrp.Anchored = false
                     task.wait(0.1)
