@@ -394,17 +394,17 @@ task.spawn(function()
                     promptTarget.RequiresLineOfSight = false
                     promptTarget.MaxActivationDistance = 30
                     
-                    -- Jeda kecil agar server mencatat lokasi baru pemain
-                    task.wait(0.08)
+                    -- Jeda lebih manusiawi (0.2s) agar server sempat mencatat lokasi terbaru karakter
+                    task.wait(0.2)
                     
                     pcall(function()
                         promptTarget:InputHoldBegin()
                         
                         local durasiHold = promptTarget.HoldDuration
-                        if durasiHold <= 0 then durasiHold = 0.1 end
+                        if durasiHold <= 0 then durasiHold = 0.2 end
                         
-                        -- Tahan presisi dengan tambahan buffer kecil
-                        task.wait(durasiHold + 0.15)
+                        -- Memberi buffer ekstra (0.35s) saat menahan tombol agar server memvalidasi penekanan tombol secara penuh
+                        task.wait(durasiHold + 0.35)
                         
                         promptTarget:InputHoldEnd()
                     end)
@@ -415,16 +415,16 @@ task.spawn(function()
                         promptTarget.MaxActivationDistance = maxDist
                     end)
                     
-                    -- Lepas kuncian dan beri waktu server memasukkan item ke tas sebelum mencari item berikutnya
-                    task.wait(0.1)
+                    -- Lepas kuncian dan beri jeda lebih stabil (0.3s) agar item benar-benar masuk inventaris
+                    task.wait(0.3)
                     hrp.Anchored = false
-                    task.wait(0.1)
+                    task.wait(0.3)
                 end
             else
-                task.wait(0.1)
+                task.wait(0.3)
             end
         else
-            task.wait(0.1)
+            task.wait(0.3)
         end
     end
 end)
